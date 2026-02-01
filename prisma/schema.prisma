@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String       @map("password_hash")
+  name         String?
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  
+  watchlists   Watchlist[]
+  predictions  Prediction[]
+  
+  @@map("users")
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  symbol    String
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, symbol])
+  @@index([userId])
+  @@map("watchlists")
+}
+
+model Prediction {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  symbol     String
+  prediction String   // "UP" or "DOWN"
+  confidence Float
+  signal     String   // "BUY", "SELL", or "NO_TRADE"
+  date       DateTime @default(now())
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([symbol])
+  @@index([date])
+  @@index([userId, symbol])
+  @@map("predictions")
+}
